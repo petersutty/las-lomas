@@ -376,6 +376,8 @@
                     var guestFormToRemove = e.target.closest('.guest-form');
                     guestFormToRemove.remove();
                     renumberGuestForms();
+                    // Re-apply the address field logic based on the checkbox state
+                    toggleAddressFields(copyAddressCheckbox.checked);
                 }
             });
 
