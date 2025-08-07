@@ -324,15 +324,35 @@
                 }
             }
 
+            // Function to handle the address fields for all guests except the first one
+            function toggleAddressFields(isDisabled) {
+                const otherGuestForms = document.querySelectorAll('.guest-form:not(:first-child)');
+                otherGuestForms.forEach(form => {
+                    const addressSection = form.querySelector('.residential-address-section');
+                    const addressInputs = addressSection.querySelectorAll('input');
+
+                    if (isDisabled) {
+                        addressSection.classList.add('hidden');
+                        addressInputs.forEach(input => input.removeAttribute('required'));
+                    } else {
+                        addressSection.classList.remove('hidden');
+                        addressInputs.forEach(input => input.setAttribute('required', ''));
+                    }
+                });
+            }
+
             // Add event listener to the "Add Another Guest" button
             addGuestBtn.addEventListener('click', function() {
                 guestCount++;
                 var newGuestForm = createGuestForm(guestCount);
                 guestsContainer.appendChild(newGuestForm);
 
-                // Check if the checkbox is checked, and hide the address section for the new guest if it is.
+                // If the checkbox is checked, immediately hide the address section and remove required attributes for the new guest.
                 if (copyAddressCheckbox.checked) {
-                    newGuestForm.querySelector('.residential-address-section').classList.add('hidden');
+                    const addressSection = newGuestForm.querySelector('.residential-address-section');
+                    const addressInputs = addressSection.querySelectorAll('input');
+                    addressSection.classList.add('hidden');
+                    addressInputs.forEach(input => input.removeAttribute('required'));
                 }
 
                 // Re-bind event listeners for the new form
@@ -361,41 +381,34 @@
 
             // Add event listener for the new "Copy Address" checkbox
             copyAddressCheckbox.addEventListener('change', function() {
-                // Get all other guest forms
-                var otherGuestForms = document.querySelectorAll('.guest-form:not(:first-child)');
+                if (this.checked) {
+                    // Get the address fields from the first guest's form
+                    var firstGuestForm = document.querySelector('.guest-form');
+                    if (!firstGuestForm) return;
 
-                // Only run the copy logic and hide/show if there are other guests
-                if (otherGuestForms.length > 0) {
-                    if (this.checked) {
-                        // Get the address fields from the first guest's form
-                        var firstGuestForm = document.querySelector('.guest-form');
-                        if (!firstGuestForm) return;
+                    var street = firstGuestForm.querySelector('[name="street"]').value;
+                    var streetNumber = firstGuestForm.querySelector('[name="streetNumber"]').value;
+                    var town = firstGuestForm.querySelector('[name="town"]').value;
+                    var postalCode = firstGuestForm.querySelector('[name="postalCode"]').value;
+                    var province = firstGuestForm.querySelector('[name="province"]').value;
+                    var country = firstGuestForm.querySelector('[name="country"]').value;
 
-                        var street = firstGuestForm.querySelector('[name="street"]').value;
-                        var streetNumber = firstGuestForm.querySelector('[name="streetNumber"]').value;
-                        var town = firstGuestForm.querySelector('[name="town"]').value;
-                        var postalCode = firstGuestForm.querySelector('[name="postalCode"]').value;
-                        var province = firstGuestForm.querySelector('[name="province"]').value;
-                        var country = firstGuestForm.querySelector('[name="country"]').value;
-
-                        // Loop through the other forms and populate their address fields
-                        otherGuestForms.forEach(function(form) {
-                            form.querySelector('[name="street"]').value = street;
-                            form.querySelector('[name="streetNumber"]').value = streetNumber;
-                            form.querySelector('[name="town"]').value = town;
-                            form.querySelector('[name="postalCode"]').value = postalCode;
-                            form.querySelector('[name="province"]').value = province;
-                            form.querySelector('[name="country"]').value = country;
-                            
-                            // Hide the address section for the other guests
-                            form.querySelector('.residential-address-section').classList.add('hidden');
-                        });
-                    } else {
-                        // Unchecked: show the address sections for all other guests
-                        otherGuestForms.forEach(function(form) {
-                            form.querySelector('.residential-address-section').classList.remove('hidden');
-                        });
-                    }
+                    // Loop through the other forms and populate their address fields
+                    const otherGuestForms = document.querySelectorAll('.guest-form:not(:first-child)');
+                    otherGuestForms.forEach(function(form) {
+                        form.querySelector('[name="street"]').value = street;
+                        form.querySelector('[name="streetNumber"]').value = streetNumber;
+                        form.querySelector('[name="town"]').value = town;
+                        form.querySelector('[name="postalCode"]').value = postalCode;
+                        form.querySelector('[name="province"]').value = province;
+                        form.querySelector('[name="country"]').value = country;
+                    });
+                    
+                    // Hide the address sections and remove the required attributes
+                    toggleAddressFields(true);
+                } else {
+                    // Unchecked: show the address sections and add back the required attributes
+                    toggleAddressFields(false);
                 }
             });
 
