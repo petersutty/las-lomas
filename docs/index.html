@@ -21,7 +21,7 @@
         </p>
 
         <!-- The main form -->
-        <form id="userDataForm" class="space-y-6">
+        <form id="guestCheckinForm" class="space-y-6">
             <div id="guests-container" class="space-y-8">
                 <!-- Guest Form 1 (This will be the template) -->
                 <div class="guest-form bg-gray-50 p-6 rounded-lg border border-gray-200">
@@ -137,43 +137,30 @@
             </button>
 
             <!-- Submit Button -->
-            <button type="submit" id="generateBtn"
+            <button type="submit" id="submitBtn"
                     class="w-full flex justify-center py-3 px-4 rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
                 Check in
             </button>
         </form>
 
-        <!-- Area to display the generated XML string -->
-        <div id="xmlOutputContainer" class="mt-8 hidden">
-            <h2 class="text-xl font-bold text-gray-800 mb-2">Generated XML</h2>
-            <p class="text-gray-600 text-sm mb-4">
-                Click the "Download XML" button to save the file, then upload it to your Google Drive.
-            </p>
-            <textarea id="xmlOutput" rows="10" readonly
-                      class="block w-full p-4 border border-gray-300 rounded-md bg-gray-50 text-gray-700 font-mono resize-none text-sm"></textarea>
-            <div class="mt-4 flex flex-col md:flex-row justify-center space-y-2 md:space-y-0 md:space-x-4">
-                <button id="downloadBtn"
-                        class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 2a.75.75 0 01.75.75v8.5a.75.75 0 01-1.5 0V2.75A.75.75 0 0110 2z" />
-                        <path fill-rule="evenodd" d="M5.25 12a.75.75 0 01.75-.75h8a.75.75 0 010 1.5h-8a.75.75 0 01-.75-.75zm0 3a.75.75 0 01.75-.75h8a.75.75 0 010 1.5h-8a.75.75 0 01-.75-.75zM4.75 12a.75.75 0 00-.75.75v.5c0 .414.336.75.75.75h10.5a.75.75 0 00.75-.75v-.5a.75.75 0 00-.75-.75H4.75zM4.75 15a.75.75 0 00-.75.75v.5a.75.75 0 00.75.75h10.5a.75.75 0 00.75-.75v-.5a.75.75 0 00-.75-.75H4.75z" clip-rule="evenodd" />
-                    </svg>
-                    Download XML
-                </button>
-            </div>
+        <!-- Message Box for user feedback -->
+        <div id="messageBox" class="mt-8 hidden p-4 text-sm rounded-lg" role="alert">
+            <span id="messageText"></span>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Your Google Apps Script deployment URL goes here
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_X9nVEOqPsH8fpL2eQH0icDIcjWozeEq4XA-0s4ec2GxPYdjTfFNyWT1LIopeOXnzIw/exec';
+            
             // Get references to the main elements
-            var form = document.getElementById('userDataForm');
+            var form = document.getElementById('guestCheckinForm');
             var guestsContainer = document.getElementById('guests-container');
             var addGuestBtn = document.getElementById('addGuestBtn');
             var copyAddressCheckbox = document.getElementById('copyAddressCheckbox');
-            var xmlOutputContainer = document.getElementById('xmlOutputContainer');
-            var xmlOutput = document.getElementById('xmlOutput');
-            var downloadBtn = document.getElementById('downloadBtn');
+            var messageBox = document.getElementById('messageBox');
+            var messageText = document.getElementById('messageText');
 
             var guestCount = 1;
 
@@ -324,6 +311,19 @@
                 guestCount = guestForms.length;
             }
 
+            // Function to show a message to the user
+            function showMessage(text, isError = false) {
+                messageBox.classList.remove('hidden');
+                messageText.textContent = text;
+                if (isError) {
+                    messageBox.classList.remove('bg-green-100', 'text-green-800');
+                    messageBox.classList.add('bg-red-100', 'text-red-800');
+                } else {
+                    messageBox.classList.remove('bg-red-100', 'text-red-800');
+                    messageBox.classList.add('bg-green-100', 'text-green-800');
+                }
+            }
+
             // Add event listener to the "Add Another Guest" button
             addGuestBtn.addEventListener('click', function() {
                 guestCount++;
@@ -400,90 +400,58 @@
             });
 
             // Add event listener for the form submission
-            form.addEventListener('submit', function(event) {
-                // Prevent the default form submission to the server
-                event.preventDefault();
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault(); // Prevent default form submission
 
-                var xmlString = `<?xml version="1.0" encoding="UTF-8"?>
-<user_data>
-`;
-                
-                var guestForms = document.querySelectorAll('.guest-form');
-                guestForms.forEach(function(guestForm, index) {
-                    var guestNumber = index + 1;
-                    var name = guestForm.querySelector('[name="name"]').value;
-                    var firstSurname = guestForm.querySelector('[name="firstSurname"]').value;
-                    var secondSurname = guestForm.querySelector('[name="secondSurname"]').value;
-                    var birthdate = guestForm.querySelector('[name="birthdate"]').value;
-                    var emailAddress = guestForm.querySelector('[name="emailAddress"]').value;
-                    var telephoneNumber = guestForm.querySelector('[name="telephoneNumber"]').value;
-                    var identificationType = guestForm.querySelector('[name="identificationType"]').value;
-                    var documentNumber = guestForm.querySelector('[name="documentNumber"]').value;
-                    var documentSupport = guestForm.querySelector('[name="documentSupport"]').value;
+                // Disable button and show loading message
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Submitting...';
+                showMessage('Submitting your data...', false);
+
+                try {
+                    const guestData = [];
+                    const guestForms = document.querySelectorAll('.guest-form');
+
+                    guestForms.forEach(function(guestForm) {
+                        const data = {
+                            name: guestForm.querySelector('[name="name"]').value,
+                            firstSurname: guestForm.querySelector('[name="firstSurname"]').value,
+                            secondSurname: guestForm.querySelector('[name="secondSurname"]').value,
+                            birthdate: guestForm.querySelector('[name="birthdate"]').value,
+                            emailAddress: guestForm.querySelector('[name="emailAddress"]').value,
+                            telephoneNumber: guestForm.querySelector('[name="telephoneNumber"]').value,
+                            identificationType: guestForm.querySelector('[name="identificationType"]').value,
+                            documentNumber: guestForm.querySelector('[name="documentNumber"]').value,
+                            documentSupport: guestForm.querySelector('[name="documentSupport"]').value,
+                            street: guestForm.querySelector('[name="street"]').value,
+                            streetNumber: guestForm.querySelector('[name="streetNumber"]').value,
+                            town: guestForm.querySelector('[name="town"]').value,
+                            postalCode: guestForm.querySelector('[name="postalCode"]').value,
+                            province: guestForm.querySelector('[name="province"]').value,
+                            country: guestForm.querySelector('[name="country"]').value
+                        };
+                        guestData.push(data);
+                    });
+
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', // Required for Google Apps Script deployment
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ guests: guestData })
+                    });
                     
-                    var street = guestForm.querySelector('[name="street"]').value;
-                    var streetNumber = guestForm.querySelector('[name="streetNumber"]').value;
-                    var town = guestForm.querySelector('[name="town"]').value;
-                    var postalCode = guestForm.querySelector('[name="postalCode"]').value;
-                    var province = guestForm.querySelector('[name="province"]').value;
-                    var country = guestForm.querySelector('[name="country"]').value;
-
-                    xmlString += `    <person>
-        <name>${name}</name>
-        <first_surname>${firstSurname}</first_surname>
-        <second_surname>${secondSurname}</second_surname>
-        <birthdate>${birthdate}</birthdate>
-        <email_address>${emailAddress}</email_address>
-        <telephone_number>${telephoneNumber}</telephone_number>
-        <identification_type>${identificationType}</identification_type>
-        <document_number>${documentNumber}</document_number>
-`;
-                    if (identificationType === 'NIE' || identificationType === 'NIF' && documentSupport) {
-                        xmlString += `        <document_support>${documentSupport}</document_support>
-`;
-                    }
-
-                    xmlString += `        <residential_address>
-            <street>${street}</street>
-            <street_number>${streetNumber}</street_number>
-            <town>${town}</town>
-            <postal_code>${postalCode}</postal_code>
-            <province>${province}</province>
-            <country>${country}</country>
-        </residential_address>
-    </person>
-`;
-                });
-
-                xmlString += `</user_data>`;
-                
-                // Display the generated XML in the textarea
-                xmlOutput.value = xmlString;
-
-                // Show the XML output container
-                xmlOutputContainer.classList.remove('hidden');
-            });
-
-            // Add a click event listener for the download button
-            downloadBtn.addEventListener('click', function() {
-                var xmlString = xmlOutput.value;
-                if (xmlString) {
-                    // Create a Blob from the XML string
-                    var blob = new Blob([xmlString], { type: 'text/xml' });
-                    var url = URL.createObjectURL(blob);
-
-                    // Create a temporary link element
-                    var a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'user_data.xml'; // Set the default file name
-
-                    // Programmatically click the link to trigger the download
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-
-                    // Revoke the temporary URL
-                    URL.revokeObjectURL(url);
+                    // Since we're using 'no-cors', we can't read the response body directly,
+                    // but a successful fetch means the request was sent.
+                    showMessage('Successfully checked in! Your data has been saved.', false);
+                    form.reset(); // Clear the form after successful submission
+                } catch (error) {
+                    showMessage('An error occurred. Please try again.', true);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Check in';
                 }
             });
 
