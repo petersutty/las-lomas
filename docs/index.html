@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guests details</title>
-    <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom font for a clean look */
@@ -20,10 +19,8 @@
             In accordance with current registration regulations in Spain, we kindly request that you provide the following details for all guests booking the apartment.
         </p>
 
-        <!-- The main form -->
         <form id="guestCheckinForm" class="space-y-6">
             <div id="guests-container" class="space-y-8">
-                <!-- Guest Form 1 (This will be the template) -->
                 <div class="guest-form bg-gray-50 p-6 rounded-lg border border-gray-200">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold text-gray-800">Guest 1</h2>
@@ -48,16 +45,19 @@
                         <div>
                             <label for="birthdate-1" class="block text-sm font-medium text-gray-700">Birthdate</label>
                             <input type="date" id="birthdate-1" name="birthdate" required
+                                class="birthdate-input mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
+                        </div>
+                        <div>
+                            <label for="emailAddress-1" class="block text-sm font-medium text-gray-700">Email Address <span class="text-gray-400 font-normal">(Optional)</span></label>
+                            <input type="email" id="emailAddress-1" name="emailAddress"
                                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                         </div>
                         <div>
-                            <label for="emailAddress-1" class="block text-sm font-medium text-gray-700">Email Address</label>
-                            <input type="email" id="emailAddress-1" name="emailAddress" required
-                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
-                        </div>
-                        <div>
-                            <label for="telephoneNumber-1" class="block text-sm font-medium text-gray-700">Telephone Number</label>
+                            <label for="telephoneNumber-1" class="block text-sm font-medium text-gray-700">Telephone Number <span class="text-xs text-gray-500">(e.g., +34600123456)</span></label>
                             <input type="tel" id="telephoneNumber-1" name="telephoneNumber" required
+                                placeholder="+1234567890"
+                                pattern="^\+[1-9]\d{1,14}$"
+                                title="Please enter a valid international phone number starting with + (e.g., +15551234567)"
                                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                         </div>
                         <div>
@@ -121,7 +121,6 @@
                 </div>
             </div>
 
-            <!-- New checkbox to copy address -->
             <div class="flex items-center space-x-2 pt-4">
                 <input type="checkbox" id="copyAddressCheckbox"
                        class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
@@ -130,20 +129,17 @@
                 </label>
             </div>
 
-            <!-- Add Guest Button -->
             <button type="button" id="addGuestBtn"
                     class="w-full flex justify-center py-3 px-4 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
                 Add Another Guest
             </button>
 
-            <!-- Submit Button -->
             <button type="submit" id="submitBtn"
                     class="w-full flex justify-center py-3 px-4 rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
                 Check in
             </button>
         </form>
 
-        <!-- Message Box for user feedback -->
         <div id="messageBox" class="mt-8 hidden p-4 text-sm rounded-lg" role="alert">
             <span id="messageText"></span>
         </div>
@@ -164,6 +160,36 @@
 
             var guestCount = 1;
 
+            // Function to check age and toggle ID requirements
+            function checkAgeAndToggleID(birthdateInput) {
+                if (!birthdateInput.value) return;
+
+                const dob = new Date(birthdateInput.value);
+                const today = new Date();
+                
+                let age = today.getFullYear() - dob.getFullYear();
+                const m = today.getMonth() - dob.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                    age--;
+                }
+
+                const guestForm = birthdateInput.closest('.guest-form');
+                const idSelect = guestForm.querySelector('select[name="identificationType"]');
+                const docInput = guestForm.querySelector('input[name="documentNumber"]');
+                
+                // Logic: If under 14, remove required. Else, add required.
+                if (age < 14) {
+                    idSelect.removeAttribute('required');
+                    docInput.removeAttribute('required');
+                    // Optional: Visual cue (e.g., change placeholder or background)
+                    docInput.placeholder = "Not required for < 14";
+                } else {
+                    idSelect.setAttribute('required', '');
+                    docInput.setAttribute('required', '');
+                    docInput.placeholder = "";
+                }
+            }
+
             // Function to create a new guest form section
             function createGuestForm(guestNumber) {
                 var newGuestForm = document.createElement('div');
@@ -177,6 +203,8 @@
                                          </svg>
                                      </button>
                                  </div>`;
+                
+                // Updated template with correct E.164 pattern and optional email
                 var formHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label for="name-${guestNumber}" class="block text-sm font-medium text-gray-700">Name</label>
@@ -196,16 +224,19 @@
                                     <div>
                                         <label for="birthdate-${guestNumber}" class="block text-sm font-medium text-gray-700">Birthdate</label>
                                         <input type="date" id="birthdate-${guestNumber}" name="birthdate" required
+                                            class="birthdate-input mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="emailAddress-${guestNumber}" class="block text-sm font-medium text-gray-700">Email Address <span class="text-gray-400 font-normal">(Optional)</span></label>
+                                        <input type="email" id="emailAddress-${guestNumber}" name="emailAddress"
                                             class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                                     </div>
                                     <div>
-                                        <label for="emailAddress-${guestNumber}" class="block text-sm font-medium text-gray-700">Email Address</label>
-                                        <input type="email" id="emailAddress-${guestNumber}" name="emailAddress" required
-                                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
-                                    </div>
-                                    <div>
-                                        <label for="telephoneNumber-${guestNumber}" class="block text-sm font-medium text-gray-700">Telephone Number</label>
+                                        <label for="telephoneNumber-${guestNumber}" class="block text-sm font-medium text-gray-700">Telephone Number <span class="text-xs text-gray-500">(e.g., +34600123456)</span></label>
                                         <input type="tel" id="telephoneNumber-${guestNumber}" name="telephoneNumber" required
+                                            placeholder="+1234567890"
+                                            pattern="^\\+[1-9]\\d{1,14}$"
+                                            title="Please enter a valid international phone number starting with + (e.g., +15551234567)"
                                             class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                                     </div>
                                     <div>
@@ -355,7 +386,7 @@
                     addressInputs.forEach(input => input.removeAttribute('required'));
                 }
 
-                // Re-bind event listeners for the new form
+                // Re-bind event listeners for the new form (Document Support)
                 var newIdentificationTypeSelect = newGuestForm.querySelector('[id="identificationType-' + guestCount + '"]');
                 var newDocumentSupportContainer = newGuestForm.querySelector('[id="documentSupportContainer-' + guestCount + '"]');
                 if (newIdentificationTypeSelect) {
@@ -367,6 +398,13 @@
                             newDocumentSupportContainer.querySelector('input').value = '';
                         }
                     });
+                }
+            });
+
+            // Handle Age Change (Event Delegation for all guests)
+            guestsContainer.addEventListener('change', function(e) {
+                if (e.target.name === 'birthdate') {
+                    checkAgeAndToggleID(e.target);
                 }
             });
 
@@ -484,7 +522,20 @@
                 });
             }
 
-            // Bind event listeners for dynamically created forms
+            // Initial Age Check for Guest 1 (in case of browser auto-fill)
+            var birthdate1 = document.getElementById('birthdate-1');
+            if(birthdate1 && birthdate1.value) {
+                checkAgeAndToggleID(birthdate1);
+            }
+            
+            // Listener for initial guest 1 birthdate change (manual add since it's not dynamic yet)
+            if(birthdate1) {
+                birthdate1.addEventListener('change', function() {
+                    checkAgeAndToggleID(this);
+                });
+            }
+
+            // Bind event listeners for dynamically created forms (ID Type logic)
             guestsContainer.addEventListener('change', function(e) {
                 if (e.target.name === 'identificationType') {
                     var guestForm = e.target.closest('.guest-form');
