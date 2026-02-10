@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guests details</title>
-    <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom font for a clean look */
@@ -20,13 +19,11 @@
             In accordance with current registration regulations in Spain, we kindly request that you provide the following details for all guests booking the apartment.
         </p>
 
-        <!-- The main form -->
         <form id="guestCheckinForm" class="space-y-6">
             <div id="guests-container" class="space-y-8">
-                <!-- Guest Form 1 (This will be the template) -->
                 <div class="guest-form bg-gray-50 p-6 rounded-lg border border-gray-200">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-gray-800">Guest 1</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Guest 1 <span class="text-sm font-normal text-gray-500">(Main Guest)</span></h2>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -51,8 +48,8 @@
                                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                         </div>
                         <div>
-                            <label for="emailAddress-1" class="block text-sm font-medium text-gray-700">Email Address</label>
-                            <input type="email" id="emailAddress-1" name="emailAddress" required
+                            <label for="emailAddress-1" class="block text-sm font-medium text-gray-700">Email Address <span class="text-gray-400 text-xs">(Optional)</span></label>
+                            <input type="email" id="emailAddress-1" name="emailAddress"
                                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                         </div>
                         <div>
@@ -121,7 +118,6 @@
                 </div>
             </div>
 
-            <!-- New checkbox to copy address -->
             <div class="flex items-center space-x-2 pt-4">
                 <input type="checkbox" id="copyAddressCheckbox"
                        class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
@@ -130,20 +126,17 @@
                 </label>
             </div>
 
-            <!-- Add Guest Button -->
             <button type="button" id="addGuestBtn"
                     class="w-full flex justify-center py-3 px-4 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
                 Add Another Guest
             </button>
 
-            <!-- Submit Button -->
             <button type="submit" id="submitBtn"
                     class="w-full flex justify-center py-3 px-4 rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
                 Check in
             </button>
         </form>
 
-        <!-- Message Box for user feedback -->
         <div id="messageBox" class="mt-8 hidden p-4 text-sm rounded-lg" role="alert">
             <span id="messageText"></span>
         </div>
@@ -164,6 +157,18 @@
 
             var guestCount = 1;
 
+            // Helper function to calculate age
+            function getAge(dateString) {
+                var today = new Date();
+                var birthDate = new Date(dateString);
+                var age = today.getFullYear() - birthDate.getFullYear();
+                var m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                return age;
+            }
+
             // Function to create a new guest form section
             function createGuestForm(guestNumber) {
                 var newGuestForm = document.createElement('div');
@@ -177,6 +182,8 @@
                                          </svg>
                                      </button>
                                  </div>`;
+                
+                // UPDATED: Removed required from email and phone in template below
                 var formHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label for="name-${guestNumber}" class="block text-sm font-medium text-gray-700">Name</label>
@@ -199,13 +206,13 @@
                                             class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                                     </div>
                                     <div>
-                                        <label for="emailAddress-${guestNumber}" class="block text-sm font-medium text-gray-700">Email Address</label>
-                                        <input type="email" id="emailAddress-${guestNumber}" name="emailAddress" required
+                                        <label for="emailAddress-${guestNumber}" class="block text-sm font-medium text-gray-700">Email Address <span class="text-gray-400 text-xs">(Optional)</span></label>
+                                        <input type="email" id="emailAddress-${guestNumber}" name="emailAddress"
                                             class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                                     </div>
                                     <div>
-                                        <label for="telephoneNumber-${guestNumber}" class="block text-sm font-medium text-gray-700">Telephone Number</label>
-                                        <input type="tel" id="telephoneNumber-${guestNumber}" name="telephoneNumber" required
+                                        <label for="telephoneNumber-${guestNumber}" class="block text-sm font-medium text-gray-700">Telephone Number <span class="text-gray-400 text-xs">(Optional)</span></label>
+                                        <input type="tel" id="telephoneNumber-${guestNumber}" name="telephoneNumber"
                                             class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                                     </div>
                                     <div>
@@ -284,7 +291,12 @@
                     var guestNumber = index + 1;
                     var title = form.querySelector('h2');
                     if (title) {
-                        title.textContent = `Guest ${guestNumber}`;
+                        // Preserve (Main Guest) text for the first one if you like, or just simplified numbering:
+                        if (index === 0) {
+                             title.innerHTML = `Guest ${guestNumber} <span class="text-sm font-normal text-gray-500">(Main Guest)</span>`;
+                        } else {
+                             title.textContent = `Guest ${guestNumber}`;
+                        }
                     }
 
                     // For the first guest, remove the bin button if it exists
@@ -341,6 +353,41 @@
                 });
             }
 
+            // Function to check age and toggle ID requirements
+            function checkAgeAndToggleRequirements(inputElement) {
+                if (!inputElement || !inputElement.value) return;
+
+                const form = inputElement.closest('.guest-form');
+                if (!form) return;
+
+                const age = getAge(inputElement.value);
+                const idType = form.querySelector('[name="identificationType"]');
+                const idNum = form.querySelector('[name="documentNumber"]');
+                
+                // If age < 14, ID is not required
+                if (age < 14) {
+                    if (idType) {
+                        idType.removeAttribute('required');
+                        // Optional: Add visual cue
+                        idType.parentElement.querySelector('label').innerHTML = `Type of identification document <span class="text-gray-400 text-xs">(Child < 14)</span>`;
+                    }
+                    if (idNum) {
+                        idNum.removeAttribute('required');
+                        idNum.parentElement.querySelector('label').innerHTML = `Document Number <span class="text-gray-400 text-xs">(Child < 14)</span>`;
+                    }
+                } else {
+                    // Re-add required if age >= 14
+                    if (idType) {
+                        idType.setAttribute('required', '');
+                        idType.parentElement.querySelector('label').innerText = `Type of identification document`;
+                    }
+                    if (idNum) {
+                        idNum.setAttribute('required', '');
+                        idNum.parentElement.querySelector('label').innerText = `Document Number`;
+                    }
+                }
+            }
+
             // Add event listener to the "Add Another Guest" button
             addGuestBtn.addEventListener('click', function() {
                 guestCount++;
@@ -355,7 +402,7 @@
                     addressInputs.forEach(input => input.removeAttribute('required'));
                 }
 
-                // Re-bind event listeners for the new form
+                // Re-bind event listeners for the new form (specific ID logic)
                 var newIdentificationTypeSelect = newGuestForm.querySelector('[id="identificationType-' + guestCount + '"]');
                 var newDocumentSupportContainer = newGuestForm.querySelector('[id="documentSupportContainer-' + guestCount + '"]');
                 if (newIdentificationTypeSelect) {
@@ -370,14 +417,35 @@
                 }
             });
 
-            // Use event delegation to handle clicks on dynamically added "remove" buttons
+            // Use event delegation to handle clicks and changes within the guest container
             guestsContainer.addEventListener('click', function(e) {
+                // Remove button
                 if (e.target.closest('.remove-guest-btn')) {
                     var guestFormToRemove = e.target.closest('.guest-form');
                     guestFormToRemove.remove();
                     renumberGuestForms();
                     // Re-apply the address field logic based on the checkbox state
                     toggleAddressFields(copyAddressCheckbox.checked);
+                }
+            });
+
+            // Event delegation for Input changes (handling NIE/NIF and Age logic)
+            guestsContainer.addEventListener('change', function(e) {
+                // Handle Identification Type Toggle
+                if (e.target.name === 'identificationType') {
+                    var guestForm = e.target.closest('.guest-form');
+                    var documentSupportContainer = guestForm.querySelector('[id^="documentSupportContainer-"]');
+                    if (e.target.value === 'NIE' || e.target.value === 'NIF') {
+                        documentSupportContainer.classList.remove('hidden');
+                    } else {
+                        documentSupportContainer.classList.add('hidden');
+                        documentSupportContainer.querySelector('input').value = '';
+                    }
+                }
+
+                // UPDATED: Handle Age Calculation
+                if (e.target.name === 'birthdate') {
+                    checkAgeAndToggleRequirements(e.target);
                 }
             });
 
@@ -429,6 +497,7 @@
                     const guestForms = document.querySelectorAll('.guest-form');
 
                     guestForms.forEach(function(guestForm) {
+                        // Gather data carefully, handling optional fields that might be empty
                         const data = {
                             name: guestForm.querySelector('[name="name"]').value,
                             firstSurname: guestForm.querySelector('[name="firstSurname"]').value,
@@ -470,9 +539,11 @@
                 }
             });
 
-            // Initial setup for the first guest's document support field
+            // Initial setup for the first guest
             var identificationType1 = document.getElementById('identificationType-1');
             var documentSupportContainer1 = document.getElementById('documentSupportContainer-1');
+            var birthdate1 = document.getElementById('birthdate-1');
+            
             if (identificationType1) {
                 identificationType1.addEventListener('change', function() {
                     if (this.value === 'NIE' || this.value === 'NIF') {
@@ -484,19 +555,12 @@
                 });
             }
 
-            // Bind event listeners for dynamically created forms
-            guestsContainer.addEventListener('change', function(e) {
-                if (e.target.name === 'identificationType') {
-                    var guestForm = e.target.closest('.guest-form');
-                    var documentSupportContainer = guestForm.querySelector('[id^="documentSupportContainer-"]');
-                    if (e.target.value === 'NIE' || e.target.value === 'NIF') {
-                        documentSupportContainer.classList.remove('hidden');
-                    } else {
-                        documentSupportContainer.classList.add('hidden');
-                        documentSupportContainer.querySelector('input').value = '';
-                    }
-                }
-            });
+            // Bind the age check for the first guest as well
+            if (birthdate1) {
+                birthdate1.addEventListener('change', function() {
+                    checkAgeAndToggleRequirements(this);
+                });
+            }
         });
     </script>
 </body>
