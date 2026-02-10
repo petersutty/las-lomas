@@ -5,10 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guests details</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         /* Custom font for a clean look */
         body {
             font-family: 'Inter', sans-serif;
+        }
+        /* Ensure Flatpickr input matches Tailwind styles if needed */
+        .flatpickr-input {
+            background-color: white;
         }
     </style>
 </head>
@@ -44,7 +49,7 @@
                         </div>
                         <div>
                             <label for="birthdate-1" class="block text-sm font-medium text-gray-700">Birthdate</label>
-                            <input type="date" id="birthdate-1" name="birthdate" required
+                            <input type="text" id="birthdate-1" name="birthdate" required placeholder="dd/mm/yyyy"
                                 class="birthdate-input mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                         </div>
                         <div>
@@ -145,6 +150,8 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Your Google Apps Script deployment URL goes here
@@ -159,6 +166,25 @@
             var messageText = document.getElementById('messageText');
 
             var guestCount = 1;
+
+            // --- FLATPICKR INITIALIZATION ---
+            function initFlatpickr(element) {
+                flatpickr(element, {
+                    dateFormat: "Y-m-d",     // The value stored in the input (ISO format for code logic)
+                    altInput: true,          // Create an alternative input for display
+                    altFormat: "d/m/Y",      // The format shown to the user (DD/MM/YYYY)
+                    allowInput: true,        // Allow user to type the date manually
+                    disableMobile: "true",   // Use Flatpickr on mobile instead of native picker (to enforce format)
+                    onChange: function(selectedDates, dateStr, instance) {
+                        // When date changes, trigger the age check
+                        checkAgeAndToggleID(instance.element);
+                    }
+                });
+            }
+            
+            // Initialize for the first guest immediately
+            initFlatpickr(document.getElementById('birthdate-1'));
+            // -------------------------------
 
             // Function to check age and toggle ID requirements
             function checkAgeAndToggleID(birthdateInput) {
@@ -181,7 +207,7 @@
                 if (age < 14) {
                     idSelect.removeAttribute('required');
                     docInput.removeAttribute('required');
-                    // Optional: Visual cue (e.g., change placeholder or background)
+                    // Optional: Visual cue
                     docInput.placeholder = "Not required for < 14";
                 } else {
                     idSelect.setAttribute('required', '');
@@ -204,7 +230,7 @@
                                      </button>
                                  </div>`;
                 
-                // Updated template with correct E.164 pattern and optional email
+                // Note: Changed birthdate input type to "text" and added placeholder
                 var formHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label for="name-${guestNumber}" class="block text-sm font-medium text-gray-700">Name</label>
@@ -223,7 +249,7 @@
                                     </div>
                                     <div>
                                         <label for="birthdate-${guestNumber}" class="block text-sm font-medium text-gray-700">Birthdate</label>
-                                        <input type="date" id="birthdate-${guestNumber}" name="birthdate" required
+                                        <input type="text" id="birthdate-${guestNumber}" name="birthdate" required placeholder="dd/mm/yyyy"
                                             class="birthdate-input mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                                     </div>
                                     <div>
@@ -378,6 +404,9 @@
                 var newGuestForm = createGuestForm(guestCount);
                 guestsContainer.appendChild(newGuestForm);
 
+                // Initialize Flatpickr for the new guest's birthdate field
+                initFlatpickr(newGuestForm.querySelector(`#birthdate-${guestCount}`));
+
                 // If the checkbox is checked, immediately hide the address section and remove required attributes for the new guest.
                 if (copyAddressCheckbox.checked) {
                     const addressSection = newGuestForm.querySelector('.residential-address-section');
@@ -523,12 +552,14 @@
             }
 
             // Initial Age Check for Guest 1 (in case of browser auto-fill)
+            // Note: Flatpickr might handle initial value differently, but this safeguards standard behavior
             var birthdate1 = document.getElementById('birthdate-1');
             if(birthdate1 && birthdate1.value) {
                 checkAgeAndToggleID(birthdate1);
             }
             
             // Listener for initial guest 1 birthdate change (manual add since it's not dynamic yet)
+            // Flatpickr's onChange handles this, but we keep this for robustness if JS fails to load
             if(birthdate1) {
                 birthdate1.addEventListener('change', function() {
                     checkAgeAndToggleID(this);
