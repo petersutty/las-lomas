@@ -170,9 +170,7 @@
             // --- FLATPICKR INITIALIZATION ---
             function initFlatpickr(element) {
                 flatpickr(element, {
-                    dateFormat: "Y-m-d",     // The value stored in the input (ISO format for code logic)
-                    altInput: true,          // Create an alternative input for display
-                    altFormat: "d/m/Y",      // The format shown to the user (DD/MM/YYYY)
+                    dateFormat: "d/m/Y",     // CHANGED: Sets the format to dd/mm/yyyy
                     allowInput: true,        // Allow user to type the date manually
                     disableMobile: "true",   // Use Flatpickr on mobile instead of native picker (to enforce format)
                     onChange: function(selectedDates, dateStr, instance) {
@@ -190,7 +188,15 @@
             function checkAgeAndToggleID(birthdateInput) {
                 if (!birthdateInput.value) return;
 
-                const dob = new Date(birthdateInput.value);
+                // CHANGED: Manual parsing for dd/mm/yyyy format
+                const parts = birthdateInput.value.split('/');
+                if (parts.length !== 3) return; // Basic validation to prevent errors if incomplete
+
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1; // Months are 0-indexed in JS
+                const year = parseInt(parts[2], 10);
+                
+                const dob = new Date(year, month, day);
                 const today = new Date();
                 
                 let age = today.getFullYear() - dob.getFullYear();
