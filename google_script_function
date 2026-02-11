@@ -1,19 +1,26 @@
 function doPost(e) {
-  // Get the active spreadsheet
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+  // Get the active spreadsheet object
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Sheet1');
+  
+  // Get the spreadsheet's time zone to ensure the date is correct for your region
+  var timezone = ss.getSpreadsheetTimeZone();
 
   // Parse the JSON data from the form
-  var data = JSON.parse(e.postData.contents);
+  // (We add a safety check in case e.postData is missing during testing)
+  var data = (e && e.postData) ? JSON.parse(e.postData.contents) : {guests: []};
   var guests = data.guests;
-
-  // Get the last row to append new data
-  var lastRow = sheet.getLastRow();
 
   // Loop through each guest and add a new row
   for (var i = 0; i < guests.length; i++) {
     var guest = guests[i];
+    
+    // Generate and format the timestamp
+    // "dd/MM/yyyy" formats it as Day/Month/Year (e.g., 25/12/2023)
+    var formattedDate = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
+
     var rowData = [
-      new Date(), // Timestamp
+      formattedDate, // <--- Updated Timestamp
       guest.name,
       guest.firstSurname,
       guest.secondSurname,
