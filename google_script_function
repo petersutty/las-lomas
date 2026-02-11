@@ -1,0 +1,37 @@
+function doPost(e) {
+  // Get the active spreadsheet
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+
+  // Parse the JSON data from the form
+  var data = JSON.parse(e.postData.contents);
+  var guests = data.guests;
+
+  // Get the last row to append new data
+  var lastRow = sheet.getLastRow();
+
+  // Loop through each guest and add a new row
+  for (var i = 0; i < guests.length; i++) {
+    var guest = guests[i];
+    var rowData = [
+      new Date(), // Timestamp
+      guest.name,
+      guest.firstSurname,
+      guest.secondSurname,
+      guest.birthdate,
+      guest.emailAddress,
+      guest.telephoneNumber,
+      guest.identificationType,
+      guest.documentNumber,
+      guest.documentSupport,
+      guest.street,
+      guest.streetNumber,
+      guest.town,
+      guest.postalCode,
+      guest.province,
+      guest.country
+    ];
+    sheet.appendRow(rowData);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({result: 'success', message: 'Data saved to Google Sheet'})).setMimeType(ContentService.MimeType.JSON);
+}
