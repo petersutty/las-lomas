@@ -1,26 +1,25 @@
 function doPost(e) {
   // Get the active spreadsheet object
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('Sheet1');
-  
+  var ss = SpreadsheetApp.getActiveSpreadsheet(); // [cite: 1]
+  var sheet = ss.getSheetByName('Sheet1'); // [cite: 1]
+
   // Get the spreadsheet's time zone to ensure the date is correct for your region
-  var timezone = ss.getSpreadsheetTimeZone();
+  var timezone = ss.getSpreadsheetTimeZone(); // [cite: 2]
 
   // Parse the JSON data from the form
-  // (We add a safety check in case e.postData is missing during testing)
-  var data = (e && e.postData) ? JSON.parse(e.postData.contents) : {guests: []};
-  var guests = data.guests;
+  var data = (e && e.postData) ? // [cite: 3]
+    JSON.parse(e.postData.contents) : {guests: []}; // [cite: 4]
+  var guests = data.guests; // [cite: 4]
 
   // Loop through each guest and add a new row
   for (var i = 0; i < guests.length; i++) {
-    var guest = guests[i];
+    var guest = guests[i]; // [cite: 4]
     
     // Generate and format the timestamp
-    // "dd/MM/yyyy" formats it as Day/Month/Year (e.g., 25/12/2023)
-    var formattedDate = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
-
+    var formattedDate = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy"); // [cite: 5]
+    
     var rowData = [
-      formattedDate, // <--- Updated Timestamp
+      formattedDate,
       guest.name,
       guest.firstSurname,
       guest.secondSurname,
@@ -35,10 +34,19 @@ function doPost(e) {
       guest.town,
       guest.postalCode,
       guest.province,
-      guest.country
+      guest.country // 
     ];
-    sheet.appendRow(rowData);
+    sheet.appendRow(rowData); // 
   }
 
-  return ContentService.createTextOutput(JSON.stringify({result: 'success', message: 'Data saved to Google Sheet'})).setMimeType(ContentService.MimeType.JSON);
+  // --- NEW EMAIL NOTIFICATION LOGIC ---
+  var emailTo = "YOUR_EMAIL@EXAMPLE.COM"; // <--- REPLACE THIS with your actual email
+  var subject = "New Data Saved to Google Sheet";
+  var body = "Success! New guest data has been received and saved to your spreadsheet.\n\n" +
+             "Total entries added: " + guests.length;
+  
+  MailApp.sendEmail(emailTo, subject, body);
+  // ------------------------------------
+
+  return ContentService.createTextOutput(JSON.stringify({result: 'success', message: 'Data saved to Google Sheet'})).setMimeType(ContentService.MimeType.JSON); // 
 }
