@@ -53,13 +53,13 @@
                                 class="birthdate-input mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                         </div>
                         <div>
-                            <label for="emailAddress-1" class="block text-sm font-medium text-gray-700">Email Address <span class="text-gray-400 font-normal">(Optional)</span></label>
+                            <label for="emailAddress-1" class="block text-sm font-medium text-gray-700">Email Address <span class="text-xs text-gray-500">(Required if no phone)</span></label>
                             <input type="email" id="emailAddress-1" name="emailAddress"
                                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                         </div>
                         <div>
-                            <label for="telephoneNumber-1" class="block text-sm font-medium text-gray-700">Telephone Number <span class="text-xs text-gray-500">(e.g., +34600123456)</span></label>
-                            <input type="tel" id="telephoneNumber-1" name="telephoneNumber" required
+                            <label for="telephoneNumber-1" class="block text-sm font-medium text-gray-700">Telephone Number <span class="text-xs text-gray-500">(Required if no email)</span></label>
+                            <input type="tel" id="telephoneNumber-1" name="telephoneNumber"
                                 placeholder="+1234567890"
                                 pattern="^\+[1-9]\d{1,14}$"
                                 title="Please enter a valid international phone number starting with + (e.g., +15551234567)"
@@ -102,7 +102,7 @@
                                     class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                             </div>
                             <div>
-                                <label for="town-1" class="block text-sm font-medium text-gray-700">Town</label>
+                                <label for="town-1" class="block text-sm font-medium text-gray-700">Municipality</label>
                                 <input type="text" id="town-1" name="town" required
                                     class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                             </div>
@@ -170,11 +170,10 @@
             // --- FLATPICKR INITIALIZATION ---
             function initFlatpickr(element) {
                 flatpickr(element, {
-                    dateFormat: "d/m/Y",     // CHANGED: Sets the format to dd/mm/yyyy
-                    allowInput: true,        // Allow user to type the date manually
-                    disableMobile: "true",   // Use Flatpickr on mobile instead of native picker (to enforce format)
+                    dateFormat: "d/m/Y",
+                    allowInput: true,
+                    disableMobile: "true",
                     onChange: function(selectedDates, dateStr, instance) {
-                        // When date changes, trigger the age check
                         checkAgeAndToggleID(instance.element);
                     }
                 });
@@ -188,12 +187,11 @@
             function checkAgeAndToggleID(birthdateInput) {
                 if (!birthdateInput.value) return;
 
-                // CHANGED: Manual parsing for dd/mm/yyyy format
                 const parts = birthdateInput.value.split('/');
-                if (parts.length !== 3) return; // Basic validation to prevent errors if incomplete
+                if (parts.length !== 3) return;
 
                 const day = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1; // Months are 0-indexed in JS
+                const month = parseInt(parts[1], 10) - 1;
                 const year = parseInt(parts[2], 10);
                 
                 const dob = new Date(year, month, day);
@@ -209,11 +207,9 @@
                 const idSelect = guestForm.querySelector('select[name="identificationType"]');
                 const docInput = guestForm.querySelector('input[name="documentNumber"]');
                 
-                // Logic: If under 14, remove required. Else, add required.
                 if (age < 14) {
                     idSelect.removeAttribute('required');
                     docInput.removeAttribute('required');
-                    // Optional: Visual cue
                     docInput.placeholder = "Not required for < 14";
                 } else {
                     idSelect.setAttribute('required', '');
@@ -221,6 +217,36 @@
                     docInput.placeholder = "";
                 }
             }
+
+            // Function to ensure at least Email OR Telephone is provided
+            function setupContactValidation(guestForm) {
+                const emailInput = guestForm.querySelector('input[name="emailAddress"]');
+                const phoneInput = guestForm.querySelector('input[name="telephoneNumber"]');
+
+                function validate() {
+                    const hasEmail = emailInput.value.trim() !== "";
+                    const hasPhone = phoneInput.value.trim() !== "";
+
+                    if (!hasEmail && !hasPhone) {
+                        const msg = "Please provide either an Email Address or a Telephone Number.";
+                        emailInput.setCustomValidity(msg);
+                        phoneInput.setCustomValidity(msg);
+                    } else {
+                        emailInput.setCustomValidity("");
+                        phoneInput.setCustomValidity("");
+                    }
+                }
+
+                emailInput.addEventListener('input', validate);
+                phoneInput.addEventListener('input', validate);
+                
+                // Initialize validation state
+                validate();
+            }
+
+            // Initialize validation for the first guest
+            setupContactValidation(document.querySelector('.guest-form'));
+
 
             // Function to create a new guest form section
             function createGuestForm(guestNumber) {
@@ -236,7 +262,6 @@
                                      </button>
                                  </div>`;
                 
-                // Note: Changed birthdate input type to "text" and added placeholder
                 var formHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label for="name-${guestNumber}" class="block text-sm font-medium text-gray-700">Name</label>
@@ -259,13 +284,13 @@
                                             class="birthdate-input mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                                     </div>
                                     <div>
-                                        <label for="emailAddress-${guestNumber}" class="block text-sm font-medium text-gray-700">Email Address <span class="text-gray-400 font-normal">(Optional)</span></label>
+                                        <label for="emailAddress-${guestNumber}" class="block text-sm font-medium text-gray-700">Email Address <span class="text-xs text-gray-500">(Required if no phone)</span></label>
                                         <input type="email" id="emailAddress-${guestNumber}" name="emailAddress"
                                             class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                                     </div>
                                     <div>
-                                        <label for="telephoneNumber-${guestNumber}" class="block text-sm font-medium text-gray-700">Telephone Number <span class="text-xs text-gray-500">(e.g., +34600123456)</span></label>
-                                        <input type="tel" id="telephoneNumber-${guestNumber}" name="telephoneNumber" required
+                                        <label for="telephoneNumber-${guestNumber}" class="block text-sm font-medium text-gray-700">Telephone Number <span class="text-xs text-gray-500">(Required if no email)</span></label>
+                                        <input type="tel" id="telephoneNumber-${guestNumber}" name="telephoneNumber"
                                             placeholder="+1234567890"
                                             pattern="^\\+[1-9]\\d{1,14}$"
                                             title="Please enter a valid international phone number starting with + (e.g., +15551234567)"
@@ -308,7 +333,7 @@
                                                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                                         </div>
                                         <div>
-                                            <label for="town-${guestNumber}" class="block text-sm font-medium text-gray-700">Town</label>
+                                            <label for="town-${guestNumber}" class="block text-sm font-medium text-gray-700">Municipality</label>
                                             <input type="text" id="town-${guestNumber}" name="town" required
                                                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out text-sm">
                                         </div>
@@ -350,14 +375,12 @@
                         title.textContent = `Guest ${guestNumber}`;
                     }
 
-                    // For the first guest, remove the bin button if it exists
                     if (guestNumber === 1) {
                          var binButton = form.querySelector('.remove-guest-btn');
                          if (binButton) {
                              binButton.remove();
                          }
                     } else {
-                        // For subsequent guests, make sure the bin button exists
                         var binButton = form.querySelector('.remove-guest-btn');
                         if (!binButton) {
                             var headerDiv = form.querySelector('.flex');
@@ -410,10 +433,9 @@
                 var newGuestForm = createGuestForm(guestCount);
                 guestsContainer.appendChild(newGuestForm);
 
-                // Initialize Flatpickr for the new guest's birthdate field
                 initFlatpickr(newGuestForm.querySelector(`#birthdate-${guestCount}`));
+                setupContactValidation(newGuestForm); // Set up contact validation for the new guest
 
-                // If the checkbox is checked, immediately hide the address section and remove required attributes for the new guest.
                 if (copyAddressCheckbox.checked) {
                     const addressSection = newGuestForm.querySelector('.residential-address-section');
                     const addressInputs = addressSection.querySelectorAll('input');
@@ -426,11 +448,14 @@
                 var newDocumentSupportContainer = newGuestForm.querySelector('[id="documentSupportContainer-' + guestCount + '"]');
                 if (newIdentificationTypeSelect) {
                     newIdentificationTypeSelect.addEventListener('change', function() {
+                        var supportInput = newDocumentSupportContainer.querySelector('input');
                         if (this.value === 'NIE' || this.value === 'NIF') {
                             newDocumentSupportContainer.classList.remove('hidden');
+                            supportInput.setAttribute('required', '');
                         } else {
                             newDocumentSupportContainer.classList.add('hidden');
-                            newDocumentSupportContainer.querySelector('input').value = '';
+                            supportInput.removeAttribute('required');
+                            supportInput.value = '';
                         }
                     });
                 }
@@ -449,7 +474,6 @@
                     var guestFormToRemove = e.target.closest('.guest-form');
                     guestFormToRemove.remove();
                     renumberGuestForms();
-                    // Re-apply the address field logic based on the checkbox state
                     toggleAddressFields(copyAddressCheckbox.checked);
                 }
             });
@@ -457,7 +481,6 @@
             // Add event listener for the new "Copy Address" checkbox
             copyAddressCheckbox.addEventListener('change', function() {
                 if (this.checked) {
-                    // Get the address fields from the first guest's form
                     var firstGuestForm = document.querySelector('.guest-form');
                     if (!firstGuestForm) return;
 
@@ -468,7 +491,6 @@
                     var province = firstGuestForm.querySelector('[name="province"]').value;
                     var country = firstGuestForm.querySelector('[name="country"]').value;
 
-                    // Loop through the other forms and populate their address fields
                     const otherGuestForms = document.querySelectorAll('.guest-form:not(:first-child)');
                     otherGuestForms.forEach(function(form) {
                         form.querySelector('[name="street"]').value = street;
@@ -479,19 +501,16 @@
                         form.querySelector('[name="country"]').value = country;
                     });
                     
-                    // Hide the address sections and remove the required attributes
                     toggleAddressFields(true);
                 } else {
-                    // Unchecked: show the address sections and add back the required attributes
                     toggleAddressFields(false);
                 }
             });
 
             // Add event listener for the form submission
             form.addEventListener('submit', async function(event) {
-                event.preventDefault(); // Prevent default form submission
+                event.preventDefault();
 
-                // Disable button and show loading message
                 const submitBtn = document.getElementById('submitBtn');
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = 'Submitting...';
@@ -524,17 +543,15 @@
 
                     const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'no-cors', // Required for Google Apps Script deployment
+                        mode: 'no-cors',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({ guests: guestData })
                     });
                     
-                    // Since we're using 'no-cors', we can't read the response body directly,
-                    // but a successful fetch means the request was sent.
                     showMessage('Successfully checked in! Your data has been saved.', false);
-                    form.reset(); // Clear the form after successful submission
+                    form.reset();
                 } catch (error) {
                     showMessage('An error occurred. Please try again.', true);
                 } finally {
@@ -548,40 +565,43 @@
             var documentSupportContainer1 = document.getElementById('documentSupportContainer-1');
             if (identificationType1) {
                 identificationType1.addEventListener('change', function() {
+                    var supportInput = documentSupportContainer1.querySelector('input');
                     if (this.value === 'NIE' || this.value === 'NIF') {
                         documentSupportContainer1.classList.remove('hidden');
+                        supportInput.setAttribute('required', '');
                     } else {
                         documentSupportContainer1.classList.add('hidden');
-                        documentSupportContainer1.querySelector('input').value = '';
+                        supportInput.removeAttribute('required');
+                        supportInput.value = '';
                     }
                 });
             }
 
-            // Initial Age Check for Guest 1 (in case of browser auto-fill)
-            // Note: Flatpickr might handle initial value differently, but this safeguards standard behavior
             var birthdate1 = document.getElementById('birthdate-1');
             if(birthdate1 && birthdate1.value) {
                 checkAgeAndToggleID(birthdate1);
             }
             
-            // Listener for initial guest 1 birthdate change (manual add since it's not dynamic yet)
-            // Flatpickr's onChange handles this, but we keep this for robustness if JS fails to load
             if(birthdate1) {
                 birthdate1.addEventListener('change', function() {
                     checkAgeAndToggleID(this);
                 });
             }
 
-            // Bind event listeners for dynamically created forms (ID Type logic)
+            // Bind event listeners for dynamically created forms (ID Type logic) via Delegation
             guestsContainer.addEventListener('change', function(e) {
                 if (e.target.name === 'identificationType') {
                     var guestForm = e.target.closest('.guest-form');
                     var documentSupportContainer = guestForm.querySelector('[id^="documentSupportContainer-"]');
+                    var supportInput = documentSupportContainer.querySelector('input');
+                    
                     if (e.target.value === 'NIE' || e.target.value === 'NIF') {
                         documentSupportContainer.classList.remove('hidden');
+                        supportInput.setAttribute('required', '');
                     } else {
                         documentSupportContainer.classList.add('hidden');
-                        documentSupportContainer.querySelector('input').value = '';
+                        supportInput.removeAttribute('required');
+                        supportInput.value = '';
                     }
                 }
             });
