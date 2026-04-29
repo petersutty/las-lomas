@@ -40,12 +40,7 @@ function doPost(e) {
   }
 
   // --- NEW EMAIL NOTIFICATION LOGIC ---
-  var emailTo = "YOUR_EMAIL@EXAMPLE.COM"; // <--- REPLACE THIS with your actual email
-  var subject = "New Data Saved to Google Sheet";
-  var body = "Success! New guest data has been received and saved to your spreadsheet.\n\n" +
-             "Total entries added: " + guests.length;
-  
-  MailApp.sendEmail(emailTo, subject, body);
+  MailApp.sendEmail("YOUR_EMAIL@EXAMPLE.COM", "New Data Saved to Google Sheet", "Success! New guest data has been received and saved to your spreadsheet.\n\nTotal entries added: " + guests.length);
   // ------------------------------------
 
   return ContentService.createTextOutput(JSON.stringify({result: 'success', message: 'Data saved to Google Sheet'})).setMimeType(ContentService.MimeType.JSON); // 
